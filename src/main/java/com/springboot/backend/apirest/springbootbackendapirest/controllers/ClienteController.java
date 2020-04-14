@@ -6,11 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
@@ -49,9 +53,16 @@ public class ClienteController {
     }
 
     @PostMapping(value = "/clientes")
-    public ResponseEntity<?> create(@RequestBody  Cliente cliente) {
+    public ResponseEntity<?> create(@Valid @RequestBody  Cliente cliente, BindingResult result) {
         Cliente clienteNew = null;
         Map<String, Object> response = new HashMap<>();
+        if (result.hasErrors()) {
+            List<String> errors = result.getFieldErrors().stream()
+                    .map(e -> "El campo '" + e.getField() + "' " + e.getDefaultMessage())
+                    .collect(Collectors.toList());
+            response.put("errors", errors);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
         try{
             clienteNew = clienteService.save(cliente);
         } catch (DataAccessException e) {
@@ -65,9 +76,17 @@ public class ClienteController {
     }
 
     @PutMapping(value = "/clientes/{id}")
-    public ResponseEntity<?> update (@RequestBody Cliente cliente, @PathVariable Long id) {
+    public ResponseEntity<?> update (@Valid @RequestBody Cliente cliente, BindingResult result, @PathVariable Long id) {
         Cliente clienteActual = null;
         Map<String, Object> response = new HashMap<>();
+
+        if (result.hasErrors()) {
+            List<String> errors = result.getFieldErrors().stream()
+                    .map(e -> "El campo '" + e.getField() + "' " + e.getDefaultMessage())
+                    .collect(Collectors.toList());
+            response.put("errors", errors);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
 
         clienteActual = clienteService.findById(id);
 
